@@ -12,12 +12,10 @@ def strahler(
     cdef long height, width, k, x
     cdef np.ndarray[long] idx
     cdef np.ndarray[unsigned char, ndim=2] count
-    cdef long i, j, ix, jx, dx, iup, jup
+    cdef long i, j, ix, jx, dx
     cdef float z
 
     cdef CppTermProgress progress
-    cdef bint dojunctions = (junctions != None)
-    cdef int junctions_count = 0
 
     height = elevations.shape[0]
     width = elevations.shape[1]
@@ -79,8 +77,5 @@ def strahler(
                         count[ ix, jx ] = count[ i, j ] + 1
 
             progress.update(1)
-
-    msg = 'Found %d junctions' % junctions_count
-    progress.write(msg)
 
     progress.close()
