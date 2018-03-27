@@ -1,4 +1,5 @@
 numpy
 cython
+futures
 rasterio==1.0a12
 ipython==5.4.1
