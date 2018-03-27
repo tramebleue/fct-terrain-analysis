@@ -1,46 +1,22 @@
 # coding: utf-8
 
 import numpy as np
-import array
 
 cimport numpy as np
 cimport cython
-from cpython cimport array
+
 # from libc.stdio cimport sprintf
 from libcpp.pair cimport pair
 from libcpp.stack cimport stack
 from libcpp.queue cimport priority_queue
 from CppTermProgress cimport CppTermProgress
 
+from common cimport ci, cj, ingrid, ilog2, upward
+
 ctypedef pair[int, int] Cell
 ctypedef stack[Cell] CellStack
 ctypedef pair[float, Cell] QueueEntry
 ctypedef priority_queue[QueueEntry] CellQueue
-
-#                                    0   1   2   3   4   5   6   7
-#                                    N  NE   E  SE   S  SW   W  NW
-cdef int[8] ci = array.array('i', [ -1, -1,  0,  1,  1,  1,  0, -1 ])
-cdef int[8] cj = array.array('i', [  0,  1,  1,  1,  0, -1, -1, -1 ])
-
-# upward = np.power(2, np.array([ 4,  5,  6,  7,  0,  1,  2,  3 ], dtype=np.uint8))
-cdef unsigned char[8] upward = array.array('B', [ 16,  32,  64,  128,  1,  2,  4,  8 ])
-
-cdef inline bint ingrid(long height, long width, int i, int j) nogil:
-
-    return (i >= 0) and (i < height) and (j >= 0) and (j < width)
-
-cdef inline int ilog2(unsigned char x) nogil:
-
-    cdef int r = 0
-
-    if x == 0:
-        return -1
-
-    while x != 1:
-        r += 1
-        x = x >> 1
-
-    return r
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -187,7 +163,7 @@ def all_watersheds(
                     ik = i + ci[k]
                     jk = j + cj[k]
                 
-                    if not ingrid(height, width, ik, jk):
+                    if not ingrid(height, width, ik, jk) or elevation[ ik, jk ] == nodata:
                         
                         c = Cell(i, j)
                         entry = QueueEntry(-z, c)

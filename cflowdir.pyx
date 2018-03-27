@@ -1,25 +1,24 @@
 # coding: utf-8
 
 import numpy as np
-import array
 
 cimport numpy as np
 cimport cython
-from cpython cimport array
+from common cimport ci, cj
 
-#                                    0   1   2   3   4   5   6   7
-#                                    N  NE   E  SE   S  SW   W  NW
-cdef int[8] ci = array.array('i', [ -1, -1,  0,  1,  1,  1,  0, -1 ])
-cdef int[8] cj = array.array('i', [  0,  1,  1,  1,  0, -1, -1, -1 ])
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def flowdir(np.ndarray[float, ndim=2] data, np.ndarray[unsigned char, ndim=2] out, np.ndarray[double, ndim=2] distance_2d, double nodata):
+def flowdir(
+        np.ndarray[float, ndim=2] data,
+        np.ndarray[unsigned char, ndim=2] out,
+        np.ndarray[double, ndim=2] distance_2d,
+        double nodata):
 
     cdef long rows, cols
     cdef long i, j
-    cdef int x, minx
-    cdef float z, zx, sx, mins
+    cdef int x, minx, maxx
+    cdef float z, zx, sx, mins, maxs
 
     with nogil:
 
@@ -34,12 +33,16 @@ def flowdir(np.ndarray[float, ndim=2] data, np.ndarray[unsigned char, ndim=2] ou
                     # out[x, y] = nodata
                     continue
 
-                mins = 0.0
-                minx = 0
+                mins = maxs = 0.0
+                minx = maxx = 0
 
                 for x in range(8):
 
                     zx = data[ i+ci[x]+1, j+cj[x]+1 ]
+
+                    if zx == nodata:
+                        continue
+
                     sx = (zx - z) / distance_2d[ ci[x]+1, cj[x]+1 ]
 
                     if sx < mins:
@@ -47,4 +50,25 @@ def flowdir(np.ndarray[float, ndim=2] data, np.ndarray[unsigned char, ndim=2] ou
                         mins = sx
                         minx = x
 
-                out[i, j] = 1 << minx
+                    elif sx > maxs:
+
+                        maxs = sx
+                        maxx = x
+
+                if mins < 0.0:
+
+                    out[i, j] = 1 << minx
+
+                elif maxs > 0.0:
+
+                    if maxx > 3:
+
+                        out[ i, j ] = 1 << (maxx - 4)
+
+                    else:
+
+                        out[ i, j ] = 1 << (maxx + 4)
+
+                else:
+
+                    out[ i, j ] = 1
