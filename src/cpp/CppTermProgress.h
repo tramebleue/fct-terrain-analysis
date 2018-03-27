@@ -1,3 +1,5 @@
+#pragma once
+
 class CppTermProgress {
 
 	private:

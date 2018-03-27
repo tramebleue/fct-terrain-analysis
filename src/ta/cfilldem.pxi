@@ -1,28 +1,9 @@
 # coding: utf-8
-# cython: c_string_type=str, c_string_encoding=ascii
-
-import numpy as np
-# from progress import TermProgress
-# from tqdm import tqdm
-
-cimport numpy as np
-cimport cython
-from libcpp.queue cimport priority_queue
-from libcpp.pair cimport pair
-# cimport progress
-
-from CppTermProgress cimport CppTermProgress
-
-ctypedef pair[long, long] Cell
-ctypedef pair[float, Cell] Entry
-ctypedef priority_queue[Entry] Queue
-
-from common cimport ci, cj, ingrid
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def fillnd(
+def filldem(
         np.ndarray[float, ndim=2] data,
         np.ndarray[float, ndim=2] filled,
         src,
@@ -34,8 +15,8 @@ def fillnd(
     cdef long i, j, x, ix, jx
     cdef float z, zx
     cdef Cell ij
-    cdef Entry entry
-    cdef Queue queue
+    cdef QueueEntry entry
+    cdef CellQueue queue
 
     cdef np.ndarray[double, ndim=2] w
     cdef np.ndarray[float] mindiff
@@ -50,9 +31,6 @@ def fillnd(
 
     w = np.array([ ci, cj ]).T * (dx, dy)
     mindiff = np.float32(minslope*np.sqrt(np.sum(w*w, axis=1)))
-
-    # queue = list()
-    queue = Queue()
 
     # progress = tqdm(total=2*width*height)
     progress = CppTermProgress(2*width*height)
@@ -78,7 +56,7 @@ def fillnd(
                     if not ingrid(height, width, ix, jx) or (data[ ix, jx ] == nodata):
                         
                         # heapq.heappush(queue, (-z, x, y))
-                        entry = Entry(-z, Cell(i, j))
+                        entry = QueueEntry(-z, Cell(i, j))
                         queue.push(entry)
                         filled[ i, j ] = z
 
@@ -122,7 +100,7 @@ def fillnd(
                 filled[ ix, jx ] = zx
 
                 # heapq.heappush(queue, (-iz, ix, iy))
-                entry = Entry(-zx, Cell(ix, jx))
+                entry = QueueEntry(-zx, Cell(ix, jx))
                 queue.push(entry)
 
         progress.update(1)

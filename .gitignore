@@ -3,3 +3,5 @@ build
 *.pyc
 *.pyo
 *.so
+*.c
+*.cpp

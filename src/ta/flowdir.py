@@ -78,6 +78,7 @@ def main(src_file, dst_file):
                 progress.update()
 
             progress.write(u'Finish to write destination file')
+            progress.clear_progress()
 
         progress.write(u'Done.')
         progress.close()

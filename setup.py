@@ -6,10 +6,11 @@ import numpy
 
 extensions = [
     
-    Extension('*',
-        [ '*.pyx', 'CppTermProgress.cpp' ],
+    Extension('terrain_analysis',
+        # [ 'ta/terrain_analysis.pyx', 'ta/common.pxi', 'ta/cfilldem.pxi', 'ta/cflowdir.pxi', 'ta/cwatershed.pxi', 'ta/cstrahler.pxi', 'ta/CppTermProgress.cpp' ],
+        [ 'src/ta/terrain_analysis.pyx', 'src/cpp/CppTermProgress.cpp' ],
         language='c++',
-        include_dirs=[ numpy.get_include() ])
+        include_dirs=[ 'src/cpp', numpy.get_include() ])
     
     # Extension('CppTermProgress',
     #     [ 'CppTermProgress.cpp' ],
@@ -30,14 +31,14 @@ extensions = [
     #     language='c++',
     #     include_dirs=[ numpy.get_include() ]),
 
-    # Extension('cfilldem',
-    #     [ 'cfilldem.pyx', 'CppTermProgress.cpp' ],
+    # Extension('cfilldem2',
+    #     [ 'cfilldem2.pyx', 'common.pyx', 'CppTermProgress.cpp' ],
     #     language='c++',
     #     include_dirs = [ get_python_inc(plat_specific=True), numpy.get_include() ])
 
 ]
 
 setup(
-    name = "_filldem",
+    name = "terrain_analysis",
     ext_modules = cythonize(extensions),
 )

@@ -1,41 +1,5 @@
 # coding: utf-8
 
-import numpy as np
-
-cimport numpy as np
-cimport cython
-
-# from libc.stdio cimport sprintf
-from libcpp.pair cimport pair
-from libcpp.stack cimport stack
-from libcpp.queue cimport priority_queue
-from CppTermProgress cimport CppTermProgress
-
-from common cimport ci, cj, ingrid, ilog2, upward
-
-ctypedef pair[int, int] Cell
-ctypedef stack[Cell] CellStack
-ctypedef pair[float, Cell] QueueEntry
-ctypedef priority_queue[QueueEntry] CellQueue
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def upslope(
-        np.ndarray[unsigned char, ndim=2] data,
-        np.ndarray[int, ndim=2] out,
-        int i0,
-        int j0,
-        unsigned char nodata,
-        int watershed_id):
-
-    cdef long height, width
-    cdef CppTermProgress progress
-
-    height = data.shape[0]
-    width  = data.shape[1]
-
-    progress = CppTermProgress(height*width)
-    _upslope(data, out, i0, j0, nodata, watershed_id, progress)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -93,6 +57,25 @@ cdef void _upslope(
                 c = Cell(ni, nj)
                 process_stack.push(c)
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def upslope(
+        np.ndarray[unsigned char, ndim=2] data,
+        np.ndarray[int, ndim=2] out,
+        int i0,
+        int j0,
+        unsigned char nodata,
+        int watershed_id):
+
+    cdef long height, width
+    cdef CppTermProgress progress
+
+    height = data.shape[0]
+    width  = data.shape[1]
+
+    progress = CppTermProgress(height*width)
+    _upslope(data, out, i0, j0, nodata, watershed_id, progress)
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -106,7 +89,7 @@ def watershed(
 
     cdef long height, width
     cdef int i, j, si, sj, down_x
-    cdef CppTermProgress progress
+    cdef CppTermProgress.CppTermProgress progress
 
     height = data.shape[0]
     width  = data.shape[1]

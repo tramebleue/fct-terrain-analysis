@@ -1,11 +1,5 @@
 # coding: utf-8
 
-import numpy as np
-
-cimport numpy as np
-cimport cython
-from common cimport ci, cj
-
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

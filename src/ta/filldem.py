@@ -10,7 +10,7 @@ def fill_dem(src_file, dst_file, minslope=1e-3):
 
         data = src.read(1)
         filled = np.full(data.shape, src.nodata, dtype=data.dtype)
-        fillnd(data, filled, src, minslope)
+        filldem(data, filled, src, minslope)
 
         meta = src.meta
         meta.update(blockxsize=256, blockysize= 256, tiled='yes', compress='deflate')

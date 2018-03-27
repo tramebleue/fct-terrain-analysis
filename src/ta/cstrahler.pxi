@@ -1,12 +1,5 @@
 # coding: utf-8
 
-import numpy as np
-
-cimport numpy as np
-cimport cython
-from common cimport ci, cj, ingrid, ilog2
-from CppTermProgress cimport CppTermProgress
-
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

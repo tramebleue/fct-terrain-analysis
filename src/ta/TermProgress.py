@@ -33,6 +33,8 @@ class TermProgress(object):
             else:
                 stdout.write(' ')
 
+        stdout.flush()
+
     def print_progress(self, tick):
         
         stdout.write('\r')
