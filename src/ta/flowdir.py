@@ -78,10 +78,9 @@ def main(src_file, dst_file):
                 progress.update()
 
             progress.write(u'Finish to write destination file')
-            progress.clear_progress()
+            progress.close()
 
-        progress.write(u'Done.')
-        progress.close()
+        print u'Done.'
 
 def main_concurrent(src_file, dst_file, workers=mp.cpu_count()):
 
@@ -137,6 +136,67 @@ def main_concurrent(src_file, dst_file, workers=mp.cpu_count()):
                     progress.update()
 
             progress.write(u'Finish to write destination file')
+            progress.close()
 
-        progress.write(u'Done.')
-        progress.close()
+        print u'Done.'
+
+def tolog2(src_file, dst_file):
+
+    with rio.open(src_file) as src:
+
+        width = src.width
+        height = src.height
+        meta = src.meta
+        meta.update(nodata=255, dtype=np.uint8, blockxsize=256, blockysize= 256, tiled='yes', compress='deflate')
+
+        progress = TermProgress((width // 256 + 1) * (height // 256 + 1))
+        progress.write(u'Input is %d x %d' % (width, height))
+
+        with rio.open(dst_file, 'w', **meta) as dst:
+
+            for ij, window in dst.block_windows():
+
+                data = src.read(1, window=window)
+                data = np.ma.masked_where(data == src.nodata, data)
+                data = np.uint8(np.ma.log2(data))
+                data[data.mask] = 255
+
+                dst.write(data, 1, window=window)
+                progress.update()
+
+            progress.write(u'Finish to write destination file')
+            progress.close()
+
+        print u'Done.'
+
+def to2pow(src_file, dst_file):
+
+    with rio.open(src_file) as src:
+
+        width = src.width
+        height = src.height
+        meta = src.meta
+        meta.update(nodata=0, dtype=np.uint8, blockxsize=256, blockysize= 256, tiled='yes', compress='deflate')
+
+        progress = TermProgress((width // 256 + 1) * (height // 256 + 1))
+        progress.write(u'Input is %d x %d' % (width, height))
+
+        with rio.open(dst_file, 'w', **meta) as dst:
+
+            for ij, window in dst.block_windows():
+
+                data = src.read(1, window=window)
+                data = np.ma.masked_where(data == src.nodata, data)
+                data = np.uint8(np.ma.power(2, data))
+                data[data.mask] = 0
+                
+                dst.write(data, 1, window=window)
+                progress.update()
+
+            progress.write(u'Finish to write destination file')
+            progress.close()
+
+        print u'Done.'
+
+
+

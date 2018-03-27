@@ -41,28 +41,30 @@ def filldem(
     msg = 'Find boundary cells ...'
     progress.write(msg)
 
-    for i in range(height):
-        for j in range(width):
+    with nogil:
 
-            z = data[ i, j ]
-            
-            if z != nodata:
-                
-                for x in range(8):
-                
-                    ix = i + ci[x]
-                    jx = j + cj[x]
-                
-                    if not ingrid(height, width, ix, jx) or (data[ ix, jx ] == nodata):
-                        
-                        # heapq.heappush(queue, (-z, x, y))
-                        entry = QueueEntry(-z, Cell(i, j))
-                        queue.push(entry)
-                        filled[ i, j ] = z
+        for i in range(height):
+            for j in range(width):
 
-                        break
+                z = data[ i, j ]
+                
+                if z != nodata:
+                    
+                    for x in range(8):
+                    
+                        ix = i + ci[x]
+                        jx = j + cj[x]
+                    
+                        if not ingrid(height, width, ix, jx) or (data[ ix, jx ] == nodata):
+                            
+                            # heapq.heappush(queue, (-z, x, y))
+                            entry = QueueEntry(-z, Cell(i, j))
+                            queue.push(entry)
+                            filled[ i, j ] = z
 
-            progress.update(1)
+                            break
+
+                progress.update(1)
 
     msg = 'Fill depressions from bottom to top ...'
     progress.write(msg)
@@ -73,37 +75,39 @@ def filldem(
     msg = f'Starting from Z = {z:.3f}'
     progress.write(msg)
 
-    while not queue.empty():
+    with nogil:
+        
+        while not queue.empty():
 
-        # z, x, y = heapq.heappop(queue)
-        # z = filled[x, y]
-        entry = queue.top()
-        queue.pop()
+            # z, x, y = heapq.heappop(queue)
+            # z = filled[x, y]
+            entry = queue.top()
+            queue.pop()
 
-        # z = -entry.first
-        ij = entry.second
-        i = ij.first
-        j = ij.second
-        z = filled[ i, j ]
+            # z = -entry.first
+            ij = entry.second
+            i = ij.first
+            j = ij.second
+            z = filled[ i, j ]
 
-        for x in range(8):
-            
-            ix = i + ci[x]
-            jx = j + cj[x]
-            zx = data[ ix, jx ]
-            
-            if ingrid(height, width, ix, jx) and (zx != nodata) and (filled[ ix, jx ] == nodata):
+            for x in range(8):
+                
+                ix = i + ci[x]
+                jx = j + cj[x]
+                zx = data[ ix, jx ]
+                
+                if ingrid(height, width, ix, jx) and (zx != nodata) and (filled[ ix, jx ] == nodata):
 
-                if zx < (z + mindiff[x]):
-                    zx = z + mindiff[x]
+                    if zx < (z + mindiff[x]):
+                        zx = z + mindiff[x]
 
-                filled[ ix, jx ] = zx
+                    filled[ ix, jx ] = zx
 
-                # heapq.heappush(queue, (-iz, ix, iy))
-                entry = QueueEntry(-zx, Cell(ix, jx))
-                queue.push(entry)
+                    # heapq.heappush(queue, (-iz, ix, iy))
+                    entry = QueueEntry(-zx, Cell(ix, jx))
+                    queue.push(entry)
 
-        progress.update(1)
+            progress.update(1)
 
     msg = 'Done.'
     progress.write(msg)

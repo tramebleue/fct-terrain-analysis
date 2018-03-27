@@ -5,30 +5,33 @@
 @cython.wraparound(False)
 def strahler(
         np.ndarray[float, ndim=2] elevations,
-        np.ndarray[unsigned char, ndim=2] flowdir,
-        np.ndarray[unsigned char, ndim=2] out,
-        float nodata):
+        unsigned char[:,:] flowdir,
+        unsigned char[:,:] out,
+        float flowdir_nodata):
 
     cdef long height, width, k, x
     cdef np.ndarray[long] idx
     cdef np.ndarray[unsigned char, ndim=2] count
-    cdef long i, j, ix, jx, dx
+    cdef long i, j, ix, jx, dx, iup, jup
     cdef float z
+
     cdef CppTermProgress progress
+    cdef bint dojunctions = (junctions != None)
+    cdef int junctions_count = 0
 
     height = elevations.shape[0]
     width = elevations.shape[1]
 
     progress = CppTermProgress(height*width)
 
-    progress.write('Sort input by z ...')
+    progress.write('Sorting input by z ...')
 
     idx = elevations.reshape(height*width).argsort(kind='mergesort')
     count = np.zeros((height, width), dtype=np.uint8)
 
     progress.write('Compute strahler order ...')
     x = idx[height*width-1]
-    msg  = 'Start from Z = %.3f' % elevations[ x // width, x % width ]
+    msg  = 'Start from z = %.3f' % elevations[ x // width, x % width ]
     progress.write(msg)
 
     with nogil:
@@ -39,18 +42,19 @@ def strahler(
             i = x // width
             j = x  % width
 
-            z = elevations[ i, j ]
+            dx = flowdir[ i, j ]
 
-            if z == nodata:
+            if dx == flowdir_nodata:
 
+                out[ i, j ] = 0
                 progress.update(1)
                 continue
+
+            if out[ i, j ] == 0: out[ i, j ] = 1
 
             if count[ i, j ] > 1:
 
                 out[ i, j ] = out[ i, j ] + 1
-
-            dx = flowdir[ i, j ]
 
             if dx > 0:
 
@@ -62,13 +66,21 @@ def strahler(
 
                     if out[ i, j ] > out[ ix, jx ]:
 
+                        # At junction (i, j)
+
                         out[ ix, jx ] = out[ i, j ]
                         count[ ix, jx ] = 1
 
                     elif out[ i, j ] == out[ ix, jx ]:
 
+                        # At junction (ix, jx),
+                        # counting number of upstream cells with same order
+
                         count[ ix, jx ] = count[ i, j ] + 1
 
             progress.update(1)
+
+    msg = 'Found %d junctions' % junctions_count
+    progress.write(msg)
 
     progress.close()

@@ -62,11 +62,12 @@ def main(elevation_file, flow_file, dst_file):
             print 'Reading flow file ...'
             flowdata = flow.read(1)
 
-            result = np.zeros(elevation.shape, dtype=np.uint8)
-            strahler(zdata, flowdata, result, elevation.nodata)
+            result = np.ones(elevation.shape, dtype=np.uint8)
+
+            ta.strahler(zdata, flowdata, result, flow.nodata)
 
             meta = elevation.meta
-            meta.update(blockxsize=256, blockysize=256, dtype=np.uint8, tiled='yes', compress='deflate', nodata=0)
+            meta.update(nodata=0, blockxsize=256, blockysize=256, dtype=np.uint8, tiled='yes', compress='deflate')
 
             with rio.open(dst_file, 'w', **meta) as dst:
                 dst.write(result, 1)
@@ -74,3 +75,32 @@ def main(elevation_file, flow_file, dst_file):
 
             print 'Done.'
 
+
+def filter_sup(src_file, dst_file, threshold):
+
+    with rio.open(src_file) as src:
+
+        width = src.width
+        height = src.height
+        meta = src.meta
+        meta.update(nodata=0, dtype=np.uint8, blockxsize=256, blockysize= 256, tiled='yes', compress='deflate')
+
+        progress = TermProgress((width // 256 + 1) * (height // 256 + 1))
+        progress.write(u'Input is %d x %d' % (width, height))
+
+        with rio.open(dst_file, 'w', **meta) as dst:
+
+            for ij, window in dst.block_windows():
+
+                data = src.read(1, window=window)
+                
+                result = np.zeros(data.shape, dtype=np.uint8)
+                result[(data != src.nodata) & (data > threshold)] = 1
+                
+                dst.write(result, 1, window=window)
+                progress.update()
+
+            progress.write(u'Finish to write destination file')
+            progress.close()
+
+        print u'Done.'
