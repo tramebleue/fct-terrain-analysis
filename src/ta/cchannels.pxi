@@ -10,6 +10,9 @@ cdef int indegree(
         unsigned char[:,:] channels,
         long i,
         long j) nogil:
+    """ Compute in-degree of channel node.
+        If not a channel node, return 0
+    """
 
     cdef long height, width, ik, jk
     cdef int k, indeg = 0
@@ -35,15 +38,39 @@ def channels(
         unsigned char[:,:] flow,
         unsigned char[:,:] channels,
         int min_length):
+    """ Vectorize channel network.
 
-    cdef long height, width, i, j, segment_id, confluence_id, channels_count = 0
-    cdef int seg_size
-    cdef unsigned char direction
+    Inputs:
+
+    - flow: D8 flow direction raster NxM, uint8
+    - channels: channel network raster NxM, uint8
+                (0 if not a channel, > 0 if a channel)
+    - min_length: minimum length in pixels of segments to be output
+                  (apply only to head basin segments)
+
+    Outputs:
+
+    - outlets: list of coordinate pairs,
+               coordinate pair as (row, column)
+    - confluences: list of coordinate pairs
+    - segments: list of segments, ie. list of list of coordinate pairs
+
+    Example:
+    >>> outlets, confluences, segments = channels(flow, channels, 100)
+    """
+
+    cdef long height, width, i, j
+    cdef long channels_count = 0, sources_count = 0
+    cdef unsigned char direction, deg
+    cdef bint from_source
+
     cdef Cell c
     cdef CellStack stack
-    # cdef CellList confluences
-    # cdef CellList segment
-    # cdef SegmentList segments
+    cdef CellList confluences
+    cdef CellList outlets
+    cdef CellList segment
+    cdef SegmentList segments
+
     cdef unsigned char[:,:] seen_nodes
     cdef CppTermProgress progress
 
@@ -51,101 +78,121 @@ def channels(
     width = flow.shape[1]
     seen_nodes = np.zeros((height, width), dtype=np.uint8)
 
-    # with nogil:
-
     progress = CppTermProgress(height*width)
     progress.write('Find sources ...')
 
-    for i in range(height):
-        for j in range(width):
+    # Pass 1 : Sequential scan
+    #          Find source nodes, ie. pixels having in-degree = 0
 
-            if channels[ i, j ] > 0:
+    with nogil:
 
-                channels_count += 1
+        for i in range(height):
+            for j in range(width):
 
-                if indegree(flow, channels, i, j) == 0:
+                if channels[ i, j ] > 0:
 
-                    c = Cell(i, j)
-                    stack.push(c)
+                    channels_count += 1
 
-            progress.update(1)
+                    if indegree(flow, channels, i, j) == 0:
 
-    progress.write('Found %d channel pixels' % channels_count)
+                        c = Cell(i, j)
+                        stack.push(c)
+                        sources_count += 1
+
+                progress.update(1)
+
+    progress.write('Found %d sources out of %d channel pixels' % (sources_count, channels_count))
     progress.close()
 
     progress = CppTermProgress(channels_count)
     progress.write('Walk downstream from sources ...')
 
-    segment_id = 0
-    confluence_id = 0
-    confluences = list()
-    segments = list()
-    # confluences = CellList(channels_count)
+    # confluences = list()
+    # segments = list()
 
-    while not stack.empty():
+    # Pass 2 : Graph walk, from sources to outlets,
+    #          breaking segments at confluences (junctions)
 
-        # segment = CellList()
-        segment = list()
-        seg_size = 0
+    with nogil:
 
-        c = stack.top()
-        stack.pop()
+        while not stack.empty():
 
-        i = c.first
-        j = c.second
+            c = stack.top()
+            stack.pop()
 
-        while ingrid(height, width, i, j) and seen_nodes[ i, j ] == 0:
+            i = c.first
+            j = c.second
 
-            # c = Cell(i, j)
-            # segment.push_back(c)
-            # progress.write('On (%d, %d)' % (i , j))
-            segment.append((i, j))
-            seg_size += 1
-            seen_nodes[ i, j ] = 1
+            segment = CellList()
+            segment.push_back(c)
 
-            if indegree(flow, channels, i, j) > 1:
-
-                confluences.append((i, j))
-                confluence_id += 1
-                
-                if seg_size >= min_length:
-                    # segments.push_back(segment)
-                    segments.append(segment)
-                    segment_id += 1
-
-                c = Cell(i, j)
-                stack.push(c)
-                break
+            from_source = (seen_nodes[ i,j ] == 0)
 
             direction = ilog2(flow[ i, j ])
             i = i + ci[direction]
             j = j + cj[direction]
 
-            progress.update(1)
+            while ingrid(height, width, i, j) and flow[ i, j ] > 0:
+
+                deg = indegree(flow, channels, i, j)
+
+                # Visit simple nodes only once
+                if deg < 2 and seen_nodes[ i, j ] > 0:
+                    break
+
+                # Append next point to current segment
+                c = Cell(i, j)
+                segment.push_back(c)
+
+                # progress.write('On (%d, %d, deg=%d, count=%d)' % (i , j, deg, seen_nodes[ i, j ]))
+
+                # At confluence
+                if deg >= 2:
+
+                    # if we pass through this junction for the first time,
+                    # walk forward downstream from this junction
+                    if seen_nodes[i, j] == 0:
+
+                        c = Cell(i, j)
+                        stack.push(c)
+                        confluences.push_back(c)
+
+                    # record number of times
+                    # we've been through this junction
+                    seen_nodes[i , j] += 1
+
+                    break
+
+                # record number of times
+                # we've been through this node,
+                # so we can exit loops
+                seen_nodes[ i, j ] += 1
+
+                # walk downstream
+                direction = ilog2(flow[ i, j ])
+                i = i + ci[direction]
+                j = j + cj[direction]
+
+                progress.update(1)
+
+            if segment.size() > 1 and (not from_source or segment.size() > min_length):
+                
+                segments.push_back(segment)
+
+                # Finally, output final outlet
+                if indegree(flow, channels, i, j) == 1:
+
+                    c = Cell(i, j)
+                    outlets.push_back(c)
 
     progress.write('Done.')
     progress.close()
 
-    confluences_list = list()
+    # Cython's magic
+    # c++ vectors are automagically converted to python lists,
+    # and c++ pairs to python tuples
 
-    # for i in range(confluences.size()):
-    #     c = confluences[i]
-    #     confluences_list.append((c.first, c.second))
-
-    # segments_list = list()
-
-    # for i in range(segments.size()):
-
-    #     segment = segments[i]
-    #     segment_list = list()
-        
-    #     for j in range(segment.size()):
-    #         c = segment[j]
-    #         segment_list.append(c)
-            
-    #         segments_list.append(segment_list)
-
-    return confluences, segments
+    return outlets, confluences, segments
 
 
 
