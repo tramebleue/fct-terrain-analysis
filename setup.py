@@ -41,4 +41,6 @@ extensions = [
 setup(
     name = "terrain_analysis",
     ext_modules = cythonize(extensions),
+    package_dir = { '' : 'src' },
+    packages = [ 'vector' ]
 )

@@ -10,8 +10,9 @@ cdef int indegree(
         unsigned char[:,:] channels,
         long i,
         long j) nogil:
-    """ Compute in-degree of channel node.
-        If not a channel node, return 0
+    """
+    Compute in-degree of channel node.
+    If not a channel node, return 0
     """
 
     cdef long height, width, ik, jk
@@ -38,25 +39,43 @@ def channels(
         unsigned char[:,:] flow,
         unsigned char[:,:] channels,
         int min_length):
-    """ Vectorize channel network.
+    """
+    channels(flow, channels, min_length)
 
-    Inputs:
+    Vectorize channel network.
 
-    - flow: D8 flow direction raster NxM, uint8
-    - channels: channel network raster NxM, uint8
-                (0 if not a channel, > 0 if a channel)
-    - min_length: minimum length in pixels of segments to be output
-                  (apply only to head basin segments)
+    Parameters
+    ----------
 
-    Outputs:
+    flow : array_like
+        D8 flow direction raster NxM, uint8
 
-    - outlets: list of coordinate pairs,
-               coordinate pair as (row, column)
-    - confluences: list of coordinate pairs
-    - segments: list of segments, ie. list of list of coordinate pairs
+    channels : array_like
+        channel network raster NxM, uint8
+        (0 if not a channel, > 0 if a channel)
 
-    Example:
-    >>> outlets, confluences, segments = channels(flow, channels, 100)
+    min_length : int
+        minimum length in pixels of segments to be output
+        (apply only to head basin segments)
+
+    Returns
+    -------
+
+    outlets : list of coordinate pairs
+        coordinate pair as (row, column)
+
+    confluences : list of coordinate pairs
+
+    segments : list of segments
+        ie. list of list of coordinate pairs
+
+    Example
+    -------
+
+    >>> flow = ta.flowdir(dem, dem_nodata)
+    >>> strahler = ta.strahler(dem, flowdir)
+    >>> channels = np.uint8(strahler >= 6)
+    >>> outlets, confluences, segments = ta.channels(flow, channels, 100)
     """
 
     cdef long height, width, i, j
