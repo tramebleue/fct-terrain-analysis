@@ -1,6 +1,6 @@
 from sys import stdout
 
-class TermProgress(object):
+class ProgressBar(object):
 
     def __init__(self, total):
         
@@ -23,6 +23,18 @@ class TermProgress(object):
         if tick > self.last_tick:
             self.last_tick = tick
             self.print_progress(tick)
+
+    def clear_progress(self):
+        pass
+
+    def print_progress(self, tick):
+        pass
+
+    def close(self):
+        pass
+
+
+class TermProgressBar(ProgressBar):
 
     def clear_progress(self):
         

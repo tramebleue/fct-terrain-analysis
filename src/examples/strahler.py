@@ -95,7 +95,7 @@ def filter_sup(src_file, dst_file, threshold):
                 data = src.read(1, window=window)
                 
                 result = np.zeros(data.shape, dtype=np.uint8)
-                result[(data != src.nodata) & (data > threshold)] = 1
+                result[(data != src.nodata) & (data >= threshold)] = 1
                 
                 dst.write(result, 1, window=window)
                 progress.update()

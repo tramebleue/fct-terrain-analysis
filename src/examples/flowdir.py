@@ -5,7 +5,7 @@ import rasterio as rio
 import concurrent.futures
 import multiprocessing as mp
 from rasterio.windows import Window
-from TermProgress import TermProgress
+from progress import TermProgressBar
 
 try:
     
@@ -124,7 +124,7 @@ def main_concurrent(src_file, dst_file, workers=mp.cpu_count()):
 
                 progress.write(u'Read input file')
 
-                futures = { executor.submit(flowdir, data, result, d2d, nodata) : (result, window)
+                futures = { executor.submit(ta.flowdir, data, result, d2d, nodata) : (result, window)
                             for data, result, window in tasks() }
 
                 progress.write(u'Process blocks concurrently with %d workers' % workers)

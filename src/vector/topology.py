@@ -16,7 +16,8 @@ class Arc(object):
 def copy_key(instance, receiver, *keys):
 
     for key in keys:
-        if instance.has_key(key):
+        if instance.has_key(key) and instance[key]:
+
             receiver[key] = json.loads(json.dumps(instance[key]))
 
 def extract(geojson):
@@ -26,7 +27,6 @@ def extract(geojson):
     """
 
     coordinates = list()
-    coord_count = 0
     lines = list()
     rings = list()
 
@@ -115,8 +115,16 @@ def extract(geojson):
 
             raise ValueError('Unexpected type %s' % component_type)
 
-    objects = extract_geometry(geojson)
-    copy_key(geojson, objects, 'bbox', 'crs')
+    def extract_object(obj):
+        o = extract_geometry(obj)
+        copy_key(obj, o, 'bbox', 'crs')
+        return o
+
+    if geojson.has_key('type'):
+
+        objects = extract_object(geojson)
+    else:
+        objects = { key: extract_object(obj) for key, obj in geojson.items() }
 
     return np.array(coordinates), lines, rings, objects
 
@@ -644,6 +652,7 @@ def unpack(topojson):
     def unpack_ring(geometry):
 
         ring = unpack_linestring(geometry)
+        if tuple(ring[0]) != tuple(ring[-1]): print ring
         assert(tuple(ring[0]) == tuple(ring[-1]))
         return ring
 
@@ -712,8 +721,20 @@ def unpack(topojson):
 
             raise ValueError('Unexpected type %s' % component_type)
 
-    geojson = unpack_geometry(topojson['objects'])
-    copy_key(topojson, geojson, 'id', 'bbox', 'crs')
+    def unpack_object(obj):
+
+        o = unpack_geometry(obj)
+        copy_key(obj, o, 'id', 'bbox', 'crs')
+        return o
+
+    if topojson['objects'].has_key('type'):
+
+        geojson = unpack_object(topojson['objects'])
+
+    else:
+
+        geojson = { key: unpack_object(obj)
+                    for key, obj in topojson['objects'].items() }
 
     return geojson
 
