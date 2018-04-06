@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import numpy as np
+from visvalingam import simplify
 from collections import defaultdict
 from functools import partial
 import json
@@ -541,12 +542,20 @@ def map_geometries(arc_index, objects):
         elif component_type == 'Feature':
             component_arcs(component['geometry'])
 
-    component_arcs(objects)
+        return component
+
+    if objects.has_key('type'):
+        
+        component_arcs(objects)
+
+    else:
+
+        return { key: component_arcs(obj) for key, obj in objects.items() }
 
     return objects
 
 
-def topology(geojson, quantization=1e6):
+def topology(geojson, quantization=1e6, simplification=0):
     """
     Convert GeoJSON to TopoJSON.
 
@@ -596,8 +605,16 @@ def topology(geojson, quantization=1e6):
     arcs = dedup(quantized, lines, rings)
     arc_index = { (arc.a, arc.b): i+1 for i, arc in enumerate(arcs) }
 
+    if simplification > 0:
+
+        arcs = map(delta_encode, simplify(map(partial(arc_geometry, quantized), arcs), simplification))
+
+    else:
+
+        arcs = delta(quantized, arcs)
+
     topo = {
-        'arcs': delta(quantized, arcs),
+        'arcs': arcs,
         'objects': map_geometries(arc_index, objects),
         'bbox': [ minx, miny, maxx, maxy ],
         'type': 'Topology'

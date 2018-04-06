@@ -11,8 +11,10 @@ from ta.CppTermProgress cimport CppTermProgress
 
 include "common.pxi"
 include "typedef.pxi"
-include "cfilldem.pxi"
+include "cfillsinks.pxi"
 include "cflowdir.pxi"
 include "cwatershed.pxi"
 include "cstrahler.pxi"
 include "cchannels.pxi"
+include "slope.pxi"
+include "hillshade.pxi"

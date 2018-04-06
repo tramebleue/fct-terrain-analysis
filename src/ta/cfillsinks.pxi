@@ -3,11 +3,57 @@
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def filldem(
-        np.ndarray[float, ndim=2] data,
-        np.ndarray[float, ndim=2] filled,
+def fillsinks(
+        float[:,:] data,
         src,
-        float minslope):
+        float minslope,
+        float[:,:] out = None):
+    """
+    fillsinks(elevations, src, minslope, out=None)
+
+    Fill sinks of digital elevation model (DEM),
+    based on the algorithm of Wang & Liu (2006).
+
+    Parameters
+    ----------
+
+    elevations: array-like
+        Digital elevation model (DEM) raster (ndim=2)
+
+    nodata: float
+        No-data value in elevations
+
+    rx: float
+        Cell resolution in x direction
+
+    ry: float
+        Cell resolution in y direction
+
+    out: array-like
+        Same shape and dtype as elevations, initialized to nodata
+
+    minslope: float
+        Minimum slope to preserve between cells
+        when filling up sinks.
+
+    Returns
+    -------
+
+    Filled raster.
+
+    Notes
+    -----
+
+    [1] Wang, L. & H. Liu (2006)
+        An efficient method for identifying and filling surface depressions
+        in digital elevation models.
+        International Journal of Geographical Information Science,
+        Vol. 20, No. 2: 193-213.
+
+    [2] SAGA C++ Implementation
+        https://github.com/saga-gis/saga-gis/blob/1b54363/saga-gis/src/tools/terrain_analysis/ta_preprocessor/FillSinks_WL_XXL.cpp
+        GPL Licensed
+    """
 
     cdef long width, height
     cdef float dx, dy, nodata
@@ -32,11 +78,11 @@ def filldem(
     w = np.array([ ci, cj ]).T * (dx, dy)
     mindiff = np.float32(minslope*np.sqrt(np.sum(w*w, axis=1)))
 
-    # progress = tqdm(total=2*width*height)
+    if out is None:
+        out = np.full((height, width), nodata, dtype=np.float32)
+    
     progress = CppTermProgress(2*width*height)
     msg = 'Input is %d x %d' % (width, height)
-    progress.write(msg)
-    msg = 'Mindiff = ' + str(mindiff)
     progress.write(msg)
     msg = 'Find boundary cells ...'
     progress.write(msg)
@@ -60,7 +106,7 @@ def filldem(
                             # heapq.heappush(queue, (-z, x, y))
                             entry = QueueEntry(-z, Cell(i, j))
                             queue.push(entry)
-                            filled[ i, j ] = z
+                            out[ i, j ] = z
 
                             break
 
@@ -72,7 +118,7 @@ def filldem(
     entry = queue.top()
     z = -entry.first
     
-    msg = f'Starting from Z = {z:.3f}'
+    msg = f'Starting from z = {z:.3f}'
     progress.write(msg)
 
     with nogil:
@@ -80,7 +126,7 @@ def filldem(
         while not queue.empty():
 
             # z, x, y = heapq.heappop(queue)
-            # z = filled[x, y]
+            # z = out[x, y]
             entry = queue.top()
             queue.pop()
 
@@ -88,7 +134,7 @@ def filldem(
             ij = entry.second
             i = ij.first
             j = ij.second
-            z = filled[ i, j ]
+            z = out[ i, j ]
 
             for x in range(8):
                 
@@ -96,12 +142,12 @@ def filldem(
                 jx = j + cj[x]
                 zx = data[ ix, jx ]
                 
-                if ingrid(height, width, ix, jx) and (zx != nodata) and (filled[ ix, jx ] == nodata):
+                if ingrid(height, width, ix, jx) and (zx != nodata) and (out[ ix, jx ] == nodata):
 
                     if zx < (z + mindiff[x]):
                         zx = z + mindiff[x]
 
-                    filled[ ix, jx ] = zx
+                    out[ ix, jx ] = zx
 
                     # heapq.heappush(queue, (-iz, ix, iy))
                     entry = QueueEntry(-zx, Cell(ix, jx))
@@ -112,3 +158,5 @@ def filldem(
     msg = 'Done.'
     progress.write(msg)
     progress.close()
+
+    return np.asarray(out)

@@ -38,7 +38,7 @@ cdef int indegree(
 def channels(
         unsigned char[:,:] flow,
         unsigned char[:,:] channels,
-        int min_length):
+        size_t min_length):
     """
     channels(flow, channels, min_length)
 

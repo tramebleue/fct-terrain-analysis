@@ -45,8 +45,8 @@ def distance_2d(rx, ry):
     3x3 matrix, dtype float
     """
 
-    dx = np.array([-1, 0, 1] * 3).reshape(3, 3)   * rx
-    dy = np.array([-1, 0, 1] * 3).reshape(3, 3).T * ry
+    dx = np.array([1, 0, 1] * 3).reshape(3, 3)   * rx
+    dy = np.array([1, 0, 1] * 3).reshape(3, 3).T * ry
     
     return np.sqrt(dx**2 + dy**2)
 
@@ -58,11 +58,11 @@ def flowdir(elevations, rx, ry, nodata, out=None):
     Directions are numbered clockwise starting form North (N = 0)
     and are coded as power of 2 (N = 2^0 = 1) in the output.
 
-    NW |   N   |  NE
-    --------------
-     W |  i,j  |  E
-    --------------
-    SW |   S   |  SE
+    NW=128 |   N=1   |  NE=2
+    -------------------------
+     W=64  |   i,j   |  E=4
+    -------------------------
+    SW=32  |  S=16   |  SE=8
 
     Parameters
     ----------

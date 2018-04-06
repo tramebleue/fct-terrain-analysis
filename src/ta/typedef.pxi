@@ -7,3 +7,9 @@ ctypedef pair[long, long] Cell
 ctypedef stack[Cell] CellStack
 ctypedef pair[float, Cell] QueueEntry
 ctypedef priority_queue[QueueEntry] CellQueue
+
+cdef struct GradientType:
+	float slope
+	float aspect
+
+ctypedef GradientType Gradient
