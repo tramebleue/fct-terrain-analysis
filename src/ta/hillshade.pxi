@@ -66,7 +66,7 @@ def hillshade(
                 gradient = local_gradient(elevations, rx, ry, nodata, i, j)
 
                 # surface normal angle with z-axis
-                angle = pi - atan(zscale * gradient.slope)
+                angle = 0.5*pi - atan(zscale * gradient.slope)
 
                 # light angle with surface normal
                 angle = acos( sin(angle)*sin(declination) + cos(angle)*cos(declination)*cos(gradient.aspect - azimuth) )

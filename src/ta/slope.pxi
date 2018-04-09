@@ -81,7 +81,7 @@ cdef Gradient local_gradient(float[:, :] elevations, float rx, float ry, float n
 
     dzx = dzy = 0.0
     gradient.slope = 0.0
-    gradient.aspect = 0.0
+    gradient.aspect = -1.0
 
     r0 = elevations[ i+1, j ]
     r1 = elevations[ i+1, j+2 ]
@@ -96,16 +96,17 @@ cdef Gradient local_gradient(float[:, :] elevations, float rx, float ry, float n
     if not (dzx == 0.0 and dzy == 0.0):
 
         gradient.slope = sqrt(dzx*dzx + dzy*dzy)
-        # Aspect is zero for the North direction and increases clockwise.
-        gradient.aspect = pi + atan2(-dzx, -dzy)
 
-    # if dzx == 0.0 and dzy == 0.0:
-    #     aspect = -1.0
-    # elif dzx < 0.0:
-    #     aspect = 2*pi + atan2(dzx, dzy)
-    #     # aspect 
-    # else:
-    #     aspect = atan2(dzx, dzy)
+        # Aspect is zero for the North direction and increases clockwise.
+
+        # if dzy == 0.0:
+        #     if dzx > 0.0:
+        #         gradient.aspect = 1.5*pi
+        #     elif dzx < 0.0:
+        #         gradient.aspect = 0.5*pi
+        # else:
+        
+        gradient.aspect = pi + atan2(dzx, dzy)
 
     return gradient
 
@@ -117,7 +118,8 @@ def gradient(
         float rx,
         float ry,
         float nodata,
-        float[:, :] out):
+        float[:, :] out_slope,
+        float[:, :] out_aspect):
     """
     gradient(elevations, rx, ry, nodata, out)
 
@@ -148,10 +150,12 @@ def gradient(
     cdef float z, dzx, dzy, r1, r0
     cdef Gradient gradient
 
+    assert(out_slope.shape[0] == out_aspect.shape[0] and out_slope.shape[1] == out_aspect.shape[1])
+
     with nogil:
 
-        rows = out.shape[0]
-        cols = out.shape[1]
+        rows = out_slope.shape[0]
+        cols = out_slope.shape[1]
 
         for i in range(rows):
             for j in range(cols):
@@ -165,6 +169,5 @@ def gradient(
                     continue
 
                 gradient = local_gradient(elevations, rx, ry, nodata, i, j)
-                out[ i, j ] = gradient.slope
-
-    return out
+                out_slope[ i, j ] = gradient.slope
+                out_aspect[ i, j] = gradient.aspect
