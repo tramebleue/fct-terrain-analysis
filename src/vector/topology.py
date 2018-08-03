@@ -13,6 +13,7 @@ class Arc(object):
         self.a = index_a
         self.b = index_b
         self.next = None
+        self.count = 0
 
 def copy_key(instance, receiver, *keys):
 
@@ -191,9 +192,9 @@ def junction(coordinates, lines, rings):
         start = line.a
         end = line.b
         current_index = indexes[start]
-        start += 1
-        next_index = indexes[start]
+        next_index = indexes[start + 1]
 
+        start += 1
         junctions[current_index] = 1
         junction_count += 1
 
@@ -202,7 +203,7 @@ def junction(coordinates, lines, rings):
             start += 1
             previous_index = current_index
             current_index = next_index
-            next_index = index[start]
+            next_index = indexes[start]
             junction_count += sequence(i, previous_index, current_index, next_index)
 
         junctions[next_index] = 1
@@ -270,7 +271,7 @@ def cut(coordinates, lines, rings):
 
         while mid < end-1:
             mid += 1
-            if coordinates[mid] in junctions:
+            if tuple(coordinates[mid]) in junctions:
                 line.b = mid
                 line.next = Arc(mid, end)
                 line = line.next
@@ -289,7 +290,7 @@ def cut(coordinates, lines, rings):
                     ring.next = Arc(mid, end)
                     ring = ring.next
                 else:
-                    rotate(coordinates, start, mid, end)
+                    rotate(coordinates, start, mid, end-1)
                     coordinates[end] = coordinates[start]
                     ring_fixed = True
                     mid = start
