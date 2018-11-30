@@ -25,9 +25,9 @@ points.sort(key=lambda x: -x.z)
 flow = rio.open('FLOW.tif')
 flow_data = flow.read(1)
 
-channels = rio.open('CHANNELS_S7.tif')
+channels = rio.open('CHANNELS.tif')
 channels_data = channels.read(1)
-channels_data[ 5274, 7113 ] = 0
+# channels_data[ 5274, 7113 ] = 0
 
 #       0   1   2   3   4   5   6   7
 #       N  NE   E  SE   S  SW   W  NW
@@ -79,10 +79,10 @@ from rasterio import features
 import fiona.crs
 
 out = features.sieve(out, 400)
-t = flow.transform * flow.transform.translation(.5, .5)
+t = flow.transform * flow.transform.translation(0.5, 0.5)
 basins = features.shapes(out, mask=(out > 0), transform=t)
 
-with fiona.open('BASINS.shp', 'w',
+with fiona.open('WATERSHEDS.shp', 'w',
         driver='ESRI Shapefile',
         crs=fiona.crs.from_epsg(2154),
         schema={ 'geometry': 'Polygon', 'properties': [ ('basin', 'int'), ('to_basin', 'int') ] }) as dout:

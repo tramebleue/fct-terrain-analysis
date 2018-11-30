@@ -4,7 +4,7 @@
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def strahler(
-        float[:,:] elevations,
+        np.ndarray[float, ndim=2] elevations,
         unsigned char[:,:] flowdir,
         unsigned char[:,:] out,
         float flowdir_nodata):
