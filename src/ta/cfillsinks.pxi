@@ -20,14 +20,7 @@ def fillsinks(
     elevations: array-like
         Digital elevation model (DEM) raster (ndim=2)
 
-    nodata: float
-        No-data value in elevations
-
-    rx: float
-        Cell resolution in x direction
-
-    ry: float
-        Cell resolution in y direction
+    src: rasterio dataset descriptor
 
     out: array-like
         Same shape and dtype as elevations, initialized to nodata

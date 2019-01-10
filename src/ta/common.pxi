@@ -33,6 +33,11 @@ cdef inline int ilog2(unsigned char x) nogil:
 
     return r
 
+cdef inline int pow2(unsigned char x) nogil:
+
+    return 1 << x
+
+
 cdef double[:, :] distance_2d(double rx, double ry):
 
     cdef double[:, :] r
