@@ -17,4 +17,4 @@ Funding and support have been kindly provided by :
 * [Association nationale pour la recherche technologique](http://www.anrt.asso.fr/fr)
 * [Agence de l'eau Rhône-Méditerranée-Corse](https://www.eaurmc.fr/)
 
-![Supporting Partners](../fct-cli/blob/master/docs/img/partners.png)
+![Supporting Partners](https://github.com/tramebleue/fct-cli/blob/master/docs/img/partners.png)
