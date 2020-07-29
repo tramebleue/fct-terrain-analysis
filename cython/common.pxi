@@ -1,6 +1,16 @@
 import array
+import sys
 from cpython cimport array
-from libc.math cimport sqrt, atan, atan2, pi, cos, sin, tan, acos
+from libc.math cimport sqrt, atan, atan2, pi, cos, sin, tan, acos, lround
+from libcpp.map cimport map
+from libcpp.deque cimport deque
+
+cdef extern from "<algorithm>" namespace "std":
+    cdef T min[T](T a, T b) nogil
+    cdef T max[T](T a, T b) nogil
+
+# cdef extern from "<utility>" namespace "std":
+#     cdef void swap[T](T& a, T& b) nogil
 
 #                                    0   1   2   3   4   5   6   7
 #                                    N  NE   E  SE   S  SW   W  NW

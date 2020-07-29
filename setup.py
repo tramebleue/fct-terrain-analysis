@@ -4,43 +4,29 @@ from distutils.extension import Extension
 from distutils.sysconfig import get_python_inc
 import numpy
 
+# Parse the version from the main module.
+with open('fct/__init__.py', 'r') as f:
+    for line in f:
+        if line.find("__version__") >= 0:
+            version = line.split("=")[1].strip().strip('"').strip("'")
+            break
+
+open_kwds = {'encoding': 'utf-8'}
+
+with open('VERSION.txt', 'w', **open_kwds) as f:
+    f.write(version)
+
 extensions = [
     
-    Extension('terrain_analysis',
+    Extension('fct.terrain_analysis',
         # [ 'ta/terrain_analysis.pyx', 'ta/common.pxi', 'ta/cfilldem.pxi', 'ta/cflowdir.pxi', 'ta/cwatershed.pxi', 'ta/cstrahler.pxi', 'ta/CppTermProgress.cpp' ],
-        [ 'src/ta/terrain_analysis.pyx', 'src/cpp/CppTermProgress.cpp' ],
+        [ 'cython/terrain_analysis.pyx' ],
         language='c++',
         include_dirs=[ 'src/cpp', numpy.get_include() ])
-    
-    # Extension('CppTermProgress',
-    #     [ 'CppTermProgress.cpp' ],
-    #     language='c++',
-    #     include_dirs = [ get_python_inc(plat_specific=True) ]),
-    
-    # Extension('cflowdir',
-    #     [ 'cflowdir.pyx' ],
-    #     include_dirs=[ numpy.get_include() ]),
-
-    # Extension('cstrahler',
-    #     [ 'cstrahler.pyx', 'CppTermProgress.cpp' ],
-    #     language='c++',
-    #     include_dirs=[ numpy.get_include() ]),
-
-    # Extension('cwatershed',
-    #     [ 'cwatershed.pyx', 'CppTermProgress.cpp' ],
-    #     language='c++',
-    #     include_dirs=[ numpy.get_include() ]),
-
-    # Extension('cfilldem2',
-    #     [ 'cfilldem2.pyx', 'common.pyx', 'CppTermProgress.cpp' ],
-    #     language='c++',
-    #     include_dirs = [ get_python_inc(plat_specific=True), numpy.get_include() ])
-
 ]
 
 setup(
-    name = "terrain_analysis",
-    ext_modules = cythonize(extensions),
-    package_dir = { '' : 'src' },
-    packages = [ 'vector' ]
+    name = "fct_terrain_analysis",
+    version=version,
+    ext_modules = cythonize(extensions)
 )

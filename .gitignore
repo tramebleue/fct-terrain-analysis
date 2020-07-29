@@ -1,7 +1,13 @@
-python
+VERSION.txt
+python3
 build
+__pycache__
 *.pyc
 *.pyo
+*.o
 *.so
+*.dll
+*.egg-info
 *.c
 *.cpp
+.DS_Store
