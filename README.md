@@ -1,4 +1,4 @@
-# Terrain Analysis Algorithms for Raster IO
+# Fluvial Corridor Toolbox Terrain Analysis Algorithms
 
 This a port of some SAGA GIS algorithms to Cython.
 
