@@ -1,4 +1,17 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
+
+"""
+Deprecated - force flow direction from cartography stream network
+
+***************************************************************************
+*                                                                         *
+*   This program is free software; you can redistribute it and/or modify  *
+*   it under the terms of the GNU General Public License as published by  *
+*   the Free Software Foundation; either version 3 of the License, or     *
+*   (at your option) any later version.                                   *
+*                                                                         *
+***************************************************************************
+"""
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
