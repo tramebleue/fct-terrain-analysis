@@ -2,4 +2,4 @@ numpy
 cython
 futures
 rasterio==1.0a12
-ipython==5.4.1
+ipython==7.16.3
